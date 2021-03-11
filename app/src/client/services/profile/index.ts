@@ -1,7 +1,7 @@
 import { Award } from '@shared/interfaces/common';
 import axios, { AxiosResponse } from 'axios';
 
-class Profile {
+class ProfileService {
   constructor() {}
 
   public async getName(): Promise<AxiosResponse<Award[]> | never> {
@@ -21,4 +21,4 @@ class Profile {
   }
 }
 
-export const profile = new Profile();
+export const profileService = new ProfileService();

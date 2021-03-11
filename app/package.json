@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:server": "nodemon",
+    "dev": "nodemon",
     "_dev": "next dev",
     "_build": "next build",
     "_start": "next start"

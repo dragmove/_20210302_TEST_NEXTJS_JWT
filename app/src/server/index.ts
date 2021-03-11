@@ -8,7 +8,7 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import auth from './middlewares/auth';
 import { errorHandler } from './middlewares/error';
-import getRoutes from './routes';
+import getRoutes from './api/routes';
 
 const port: number = parseInt(process.env.PORT, 10) || 9001;
 const isDev = process.env.NODE_ENV !== 'production';
@@ -30,7 +30,7 @@ async function init(): Promise<void> {
 
   app.use(morgan('dev'));
   app.use(helmet());
-  // app.use(bodyParser.json());
+  app.use(bodyParser.json());
   app.use(auth);
   app.use('/api', getRoutes());
   app.use(errorHandler);

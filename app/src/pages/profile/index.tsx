@@ -1,11 +1,10 @@
 import Head from 'next/head';
 import styles from '@styles/Home.module.css';
-import { Award } from '@shared/interfaces/common';
-import { awards } from '@client/services/awards/Awards';
+import { Award, Career, ApiResult } from '@shared/interfaces/common';
+import { awardsService } from '@client/services/awards';
+import { careersService } from '@client/services/careers';
 
 export default function Profile(props: unknown) {
-  console.log('Profile props :', props);
-
   return (
     <div className={styles.container}>
       <Head>
@@ -21,19 +20,20 @@ export default function Profile(props: unknown) {
 }
 
 export const getServerSideProps = async (context) => {
-  let _awards: any;
+  let awards: ApiResult<Award[]>;
+  let careers: ApiResult<Career[]>;
 
   try {
-    _awards = await awards.getAwards();
+    awards = await awardsService.get();
+    careers = await careersService.get();
   } catch (err) {
     // TODO: redirect or display alert message
   }
 
-  const data: Award[] = _awards?.data ?? null;
-
   return {
     props: {
-      data,
+      awards: awards?.data ?? null,
+      careers: careers?.data ?? null,
     },
   };
 };

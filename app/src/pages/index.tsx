@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import styles from '@styles/Home.module.css';
 import { Award } from '@shared/interfaces/common';
-import { profile } from '@client/services/profile/Profile';
+import { profileService } from '@client/services/profile';
 
 export default function Home(props: unknown) {
   console.log('Home props :', props);
@@ -21,15 +21,15 @@ export default function Home(props: unknown) {
 }
 
 export const getServerSideProps = async (context) => {
-  let _name: any;
+  let name: any;
 
   try {
-    _name = await profile.getName();
+    name = await profileService.getName();
   } catch (err) {
     // TODO: redirect or display alert message
   }
 
-  const data: Award[] = _name?.data ?? null;
+  const data: Award[] = name?.data ?? null;
 
   return {
     props: {
