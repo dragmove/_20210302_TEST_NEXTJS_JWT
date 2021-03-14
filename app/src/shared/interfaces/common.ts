@@ -20,3 +20,8 @@ export interface ApiResult<T> {
   status: number;
   data: T;
 }
+
+export interface Member {
+  id: string;
+  password?: string;
+}

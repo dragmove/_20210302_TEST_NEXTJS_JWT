@@ -1,10 +1,42 @@
 import Head from 'next/head';
 import styles from '@styles/Home.module.css';
 import { Award, Career, ApiResult } from '@shared/interfaces/common';
+import { redirect } from '@shared/common/utils';
 import { awardsService } from '@client/services/awards';
-import { careersService } from '@client/services/careers';
+import { useEffect } from 'react';
+import Router from 'next/router';
+import nookies, { parseCookies } from 'nookies';
+import { NextPageContext } from 'next';
 
 export default function Profile(props: unknown) {
+  console.log('Profile props :', props);
+
+  /*
+  // test jwt access token when call api on client-side
+  useEffect(() => {
+    loadDatas();
+  }, []);
+
+  async function loadDatas(): Promise<void> {
+    let awards: ApiResult<Award[]>;
+
+    try {
+      const cookies = parseCookies();
+      const config = {
+        headers: {
+          Authorization: cookies?.jwtAccessToken ? `Bearer ${cookies?.jwtAccessToken}` : '',
+        },
+        isServer: false,
+      };
+
+      awards = await awardsService.get(config);
+      console.log('awards :', awards);
+    } catch (err) {
+      // display alert message, and redirect to login page.
+    }
+  }
+  */
+
   return (
     <div className={styles.container}>
       <Head>
@@ -19,21 +51,35 @@ export default function Profile(props: unknown) {
   );
 }
 
-export const getServerSideProps = async (context) => {
+export const getServerSideProps = async (context: NextPageContext) => {
+  const cookies = nookies.get(context);
+  console.log('// Profile.getServerSideProps. context cookies :', cookies);
+
   let awards: ApiResult<Award[]>;
-  let careers: ApiResult<Career[]>;
 
   try {
-    awards = await awardsService.get();
-    careers = await careersService.get();
+    const config = {
+      headers: {
+        Authorization: cookies?.jwtAccessToken ? `Bearer ${cookies?.jwtAccessToken}` : '',
+      },
+      isServer: true,
+    };
+
+    awards = await awardsService.get(config);
   } catch (err) {
-    // TODO: redirect or display alert message
+    // display alert message, and redirect to login page.
+    // console.error('[Profile.getServerSideProps Error]', err);
+
+    const res = err?.response;
+    console.log('res.status :', res?.status);
+    if (res?.status === 401) {
+      redirect('/', context); // Unauthorized
+    }
   }
 
   return {
     props: {
       awards: awards?.data ?? null,
-      careers: careers?.data ?? null,
     },
   };
 };
