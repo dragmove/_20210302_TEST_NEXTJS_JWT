@@ -3,7 +3,7 @@ import { Member } from '@shared/interfaces/common';
 import { log } from '../../shared/common/utils';
 
 export function generateAccessToken(member: Member): string {
-  const secretKey: string = process.env.JWT_ACCESS_TOKEN_SECRET_KEY || '';
+  const secretKey: string = process.env.JWT_ACCESS_TOKEN_SECRET_KEY;
 
   // Ref: https://www.npmjs.com/package/jsonwebtoken
   const accessToken: string = jwt.sign(
@@ -12,7 +12,7 @@ export function generateAccessToken(member: Member): string {
     },
     secretKey,
     {
-      expiresIn: 60, // 60 seconds
+      expiresIn: 15, // 60 seconds
     }
   );
 
@@ -20,7 +20,7 @@ export function generateAccessToken(member: Member): string {
 }
 
 export function generateRefreshToken(member: Member): string {
-  const secretKey: string = process.env.JWT_REFRESH_TOKEN_SECRET_KEY || '';
+  const secretKey: string = process.env.JWT_REFRESH_TOKEN_SECRET_KEY;
 
   const refreshToken: string = jwt.sign(
     {

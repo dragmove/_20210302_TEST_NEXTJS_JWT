@@ -23,7 +23,7 @@ const auth = (req, res, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
     console.log('authHeader :', authHeader);
 
-    const token = authHeader?.split(' ')[1]; // get JWT_TOKEN_STRING string
+    const token = authHeader?.split(' ')[1]; // get JWT_TOKEN_STRING string from 'Bearer JWT_TOKEN_STRING' string
     console.log('token :', token);
     if (!token) {
       return res.sendStatus(401); // Unauthorized

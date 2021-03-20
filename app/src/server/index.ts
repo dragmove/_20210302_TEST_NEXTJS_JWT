@@ -27,7 +27,7 @@ const db = {
       password: '8888',
     },
   ],
-  tbl_refreshTokens: [],
+  // tbl_refreshTokens: [],
 };
 
 dotenv.config();
@@ -94,9 +94,8 @@ async function init(): Promise<void> {
     log(chalk.cyan('[/login] member id, pw :', member.id, member.password));
 
     const accessToken: string = generateAccessToken(member);
-
     const refreshToken: string = generateRefreshToken(member);
-    db.tbl_refreshTokens.push(refreshToken);
+    // db.tbl_refreshTokens.push(refreshToken);
 
     log(chalk.green('JWT access token :', accessToken));
     log(chalk.green('JWT refresh token :', refreshToken));

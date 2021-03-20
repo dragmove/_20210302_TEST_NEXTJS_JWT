@@ -45,8 +45,14 @@ export default function Home(props: unknown) {
               // client needs to save access token somewhere.
               // (I just save access token to 60 seconds life cookie)
               nookies.set(null, 'jwtAccessToken', accessToken, {
-                maxAge: 60,
+                // maxAge: 60,
+                httpOnly: true,
+                secure: true,
               });
+
+              const refreshToken: string = data.refreshToken;
+              // TODO: 어디에 이 refreshToken 을 저장해야 할까? => 서버사이드에 저장해야만 한다.
+              // refreshToken 자체를 client 에게 반환하지 말고, 서버사이드 측에서 DB 에 refreshToken 을 저장해두고 이 id 의 hash 값을 client 로 반환하는게 어떨까?
             } catch (err) {
               throw err;
             }
