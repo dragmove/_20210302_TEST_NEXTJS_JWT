@@ -14,6 +14,7 @@ import { log } from '../shared/common/utils';
 import { Member } from '../shared/interfaces/common';
 import { generateAccessToken, generateRefreshToken } from './common/jwt';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 // TODO: This is a tbl_member table on DB
 const db = {
@@ -53,7 +54,7 @@ async function init(): Promise<void> {
   // TODO: Connect DB
 
   app.use(morgan('dev'));
-  app.use(helmet());
+  // app.use(helmet()); // TODO:
   app.use(bodyParser.json());
   app.use('*', auth);
 
@@ -94,8 +95,26 @@ async function init(): Promise<void> {
     log(chalk.cyan('[/login] member id, pw :', member.id, member.password));
 
     const accessToken: string = generateAccessToken(member);
+
+    // save refreshToken to redis
     const refreshToken: string = generateRefreshToken(member);
     // db.tbl_refreshTokens.push(refreshToken);
+
+    // TODO: Arrange
+    axios({
+      url: 'http://localhost:9000/refresh-token',
+      method: 'post',
+      data: {
+        memberId: id,
+        refreshToken
+      },
+    })
+    .then(res => {
+      console.log('post. set refresh-token. status :', res.status);
+    })
+    .catch(err => {
+      console.error(err);
+    });
 
     log(chalk.green('JWT access token :', accessToken));
     log(chalk.green('JWT refresh token :', refreshToken));

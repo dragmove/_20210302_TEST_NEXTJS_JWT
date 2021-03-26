@@ -11,3 +11,17 @@ services:
     container_name: app_backend_redis
     ports:
       - "9000:8080"
+    volumes:
+      - "./backend-redis:/usr/src/app"
+      - "/usr/src/app/node_modules"
+
+  # app:
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./app
+  #   container_name: app_nextjs
+  #   ports:
+  #     - "9001:9001"
+  #   volumes:
+  #     - "./app:/usr/src/app"
+  #     - "/usr/src/app/node_modules"

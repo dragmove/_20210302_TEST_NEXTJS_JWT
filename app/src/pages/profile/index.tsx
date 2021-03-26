@@ -72,8 +72,18 @@ export const getServerSideProps = async (context: NextPageContext) => {
 
     const res = err?.response;
     console.log('res.status :', res?.status);
+    console.log('res.body :', res.body);
+    console.log('res.data :', res.data);
+    
     if (res?.status === 401) {
+      // no token
       redirect('/', context); // Unauthorized
+      return;
+    }
+
+    if (res?.status === 403) {
+      // failed verify jwt token on server
+      
     }
   }
 

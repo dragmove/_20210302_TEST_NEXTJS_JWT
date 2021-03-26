@@ -1,4 +1,6 @@
 const express = require("express");
+const bodyParser = require('body-parser');
+
 const redis = require("redis");
 
 const client = redis.createClient({
@@ -13,19 +15,21 @@ client.on("error", (err) => {
 });
 
 const app = express();
+app.use(bodyParser.json())
+
 app.get("/refresh-token/:id", (req, res) => {
-  const memberId = req.data?.id;
-  console.log("get. memberId :", memberId);
+  const memberId = req.params?.id;
+  console.log("get. /refresh-token/:id. memberId :", memberId);
 
   if (!memberId) {
-    res.statusCode(400);
+    res.status(400).end();
     return;
   }
 
   client.get(`refresh_token_${memberId}`, (err, value) => {
     if (err) {
       console.error(err);
-      res.statusCode(500);
+      res.status(500).end();
       return;
     }
 
@@ -36,17 +40,19 @@ app.get("/refresh-token/:id", (req, res) => {
   });
 });
 
-app.post("/refresh-token/:id", (req, res) => {
-  const data = req.data;
-  console.log("post data :", data);
+app.post("/refresh-token", (req, res) => {
+  const data = req.body;
+  console.log("post. /refresh-token. data :", data);
 
   const { memberId, refreshToken } = data;
   if (!memberId || !refreshToken) {
-    res.statusCode(400);
+    res.status(400).end();
     return;
   }
 
-  client.set(`refresh_otken_${memberId}`, refreshToken);
+  client.set(`refresh_otken_${memberId}`, refreshToken, redis.print);
+
+  res.status(200).end();
 });
 
 app.listen(8080, () => {

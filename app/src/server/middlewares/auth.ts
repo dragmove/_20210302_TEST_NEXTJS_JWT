@@ -26,13 +26,21 @@ const auth = (req, res, next: NextFunction) => {
     const token = authHeader?.split(' ')[1]; // get JWT_TOKEN_STRING string from 'Bearer JWT_TOKEN_STRING' string
     console.log('token :', token);
     if (!token) {
-      return res.sendStatus(401); // Unauthorized
+       // Unauthorized
+      res.status(401).json({
+        message: 'NO_ACCESS_TOKEN'
+      });
+      return;
     }
 
-    const secretKey: string = process.env.JWT_ACCESS_TOKEN_SECRET_KEY || '';
+    const secretKey: string = process.env.JWT_ACCESS_TOKEN_SECRET_KEY;
     jwt.verify(token, secretKey, (error: any, member: any) => {
       if (error) {
-        return res.sendStatus(403); // Forbidden
+         // Forbidden
+        res.status(403).json({
+          message: 'FORBIDDEN_TOKEN'
+        })
+        return;
       }
 
       log(chalk.green('authenticationTokenMiddleware. decoded :', member));
