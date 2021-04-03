@@ -33,9 +33,9 @@ const db = {
 
 dotenv.config();
 
-const isDev = process.env.NODE_ENV !== 'production'; // TODO: Change isDev to phase
-
-console.log('isDev :', isDev);
+const isDev = process.env.APP_ENV !== 'production'; // TODO: Change isDev to phase
+console.log('[app-nextjs] isDev :', isDev);
+console.log('[app-nextjs] APP_ENV :', process.env.APP_ENV);
 
 async function init(): Promise<void> {
   // Ref: https://nextjs.org/docs/advanced-features/custom-server
@@ -65,7 +65,7 @@ async function init(): Promise<void> {
   app.use(customMiddleware);
 
   app.use('/api', getRoutes());
-  app.use(errorHandler);
+  app.use(errorHandler); // TODO: Check middleware line position
 
   // FIXME: Use webpack to build server/index.ts typescript file, and run.
   // Ref: https://webpack.js.org/guides/typescript/
@@ -77,7 +77,7 @@ async function init(): Promise<void> {
   // [Header] Key: 'Content-Type', Value: 'application/json'
   // [Body] { "id": "winter", "password": "8888" }
   // After calling /login, you can get { "accessToken": "JWT_TOKEN_STRING", "refreshToken": "JWT_REFRESH_TOKEN_STRING" }
-  app.post('/login', (req: Request, res: Response) => {
+  app.post('/login', async (req: Request, res: Response) => {
     // TODO:
     // Authentication
     const { id, password } = req.body;
@@ -95,31 +95,35 @@ async function init(): Promise<void> {
     log(chalk.cyan('[/login] member id, pw :', member.id, member.password));
 
     const accessToken: string = generateAccessToken(member);
-
-    // save refreshToken to redis
-    const refreshToken: string = generateRefreshToken(member);
+    const refreshToken: string = generateRefreshToken(member); // save refreshToken to redis
     // db.tbl_refreshTokens.push(refreshToken);
 
-    // TODO: Arrange
-    axios({
-      url: 'http://localhost:9000/refresh-token',
-      method: 'post',
-      data: {
-        memberId: id,
-        refreshToken
-      },
-    })
-    .then(res => {
-      console.log('post. set refresh-token. status :', res.status);
-    })
-    .catch(err => {
-      console.error(err);
-    });
+    log(chalk.green('jwt access token :', accessToken));
+    log(chalk.green('jwt refresh token :', refreshToken));
 
-    log(chalk.green('JWT access token :', accessToken));
-    log(chalk.green('JWT refresh token :', refreshToken));
+    // save refreshToken on backend-redis
+    let result;
+    try {
+      result = await axios({
+        url: 'http://backend-redis:9000/refresh-token',
+        method: 'post',
+        data: {
+          memberId: id,
+          refreshToken,
+        },
+      });
 
-    res.json({ accessToken, refreshToken });
+      console.log('post. set refresh-token. status :', result.status);
+    } catch (e) {
+      console.error(e);
+
+      res.status(500).json({
+        message: 'Failed to save a refresh token on backend-redis',
+      });
+      return;
+    }
+
+    res.status(200).json({ accessToken, refreshToken });
   });
 
   const server = app.listen(PORT, () => {

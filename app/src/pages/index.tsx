@@ -3,7 +3,7 @@ import Link from 'next/link';
 import styles from '@styles/Home.module.css';
 import { Award } from '@shared/interfaces/common';
 import { profileService } from '@client/services/profile';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 import nookies from 'nookies';
 
 export default function Home(props: unknown) {
@@ -26,7 +26,7 @@ export default function Home(props: unknown) {
             // TODO: move this to client service
             try {
               // login and get access token
-              const loginApiResult = await axios({
+              const loginApiResult: AxiosResponse = await axios({
                 // TODO: Set domain
                 url: '/login',
                 method: 'post',
@@ -52,8 +52,9 @@ export default function Home(props: unknown) {
 
               // I've already saved refreshToken to redis server
               // const refreshToken: string = data.refreshToken;
-            } catch (err) {
-              throw err;
+            } catch (e) {
+              const res: AxiosResponse = e.response;
+              console.error('[app-nextjs] Error:', res.data?.message);
             }
           }}
         >

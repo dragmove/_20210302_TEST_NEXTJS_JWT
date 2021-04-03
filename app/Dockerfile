@@ -1,5 +1,7 @@
 FROM node:alpine
 
+LABEL author="Hyunseok Kim"
+
 WORKDIR /usr/src/app
 
 COPY ./package*.json ./

@@ -1,21 +1,31 @@
 const express = require("express");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
+const cors = require("cors");
+
+console.log("[backend-redis] process.env.NODE_ENV :", process.env.NODE_ENV);
+
+const PORT = parseInt(process.env.PORT, 10) || 9000;
 
 const redis = require("redis");
 
-const client = redis.createClient({
+const redisClient = redis.createClient({
   host: "redis-server",
   port: 6379,
 });
-client.on("connect", () => {
+redisClient.on("connect", () => {
   console.log("redis-server is connected");
 });
-client.on("error", (err) => {
+redisClient.on("error", (err) => {
   console.error(err);
 });
 
 const app = express();
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+app.use(cors());
+
+app.get("/ping", (req, res) => {
+  res.status(200).send("hello backend-redis");
+});
 
 app.get("/refresh-token/:id", (req, res) => {
   const memberId = req.params?.id;
@@ -26,7 +36,7 @@ app.get("/refresh-token/:id", (req, res) => {
     return;
   }
 
-  client.get(`refresh_token_${memberId}`, (err, value) => {
+  redisClient.get(`refresh_token_${memberId}`, (err, value) => {
     if (err) {
       console.error(err);
       res.status(500).end();
@@ -50,11 +60,11 @@ app.post("/refresh-token", (req, res) => {
     return;
   }
 
-  client.set(`refresh_otken_${memberId}`, refreshToken, redis.print);
+  redisClient.set(`refresh_token_${memberId}`, refreshToken, redis.print);
 
   res.status(200).end();
 });
 
-app.listen(8080, () => {
-  console.log("Listening on port 8080");
+app.listen(PORT, () => {
+  console.log(`[backend-redis] Listening on port ${PORT}`);
 });

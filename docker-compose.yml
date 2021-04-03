@@ -3,25 +3,39 @@ version: "3.8"
 services:
   redis-server:
     image: "redis"
+    networks:
+      - node-app-network
 
   backend-redis:
+    environment: 
+      - NODE_ENV=dev # dev, alpha, beta, production
     build:
       dockerfile: Dockerfile
       context: ./backend-redis
     container_name: app_backend_redis
     ports:
-      - "9000:8080"
+      - "9000:9000"
     volumes:
       - "./backend-redis:/usr/src/app"
       - "/usr/src/app/node_modules"
+    networks:
+      - node-app-network
 
-  # app:
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./app
-  #   container_name: app_nextjs
-  #   ports:
-  #     - "9001:9001"
-  #   volumes:
-  #     - "./app:/usr/src/app"
-  #     - "/usr/src/app/node_modules"
+  app-nextjs:
+    environment: 
+      - APP_ENV=dev # dev, alpha, beta, production
+    build:
+      dockerfile: Dockerfile
+      context: ./app
+    container_name: app_nextjs
+    ports:
+      - "9001:9001"
+    volumes:
+      - "./app:/usr/src/app"
+      - "/usr/src/app/node_modules"
+    networks:
+      - node-app-network
+
+networks:
+  node-app-network:
+    driver: bridge 
