@@ -26,26 +26,42 @@ const auth = (req, res, next: NextFunction) => {
     const token = authHeader?.split(' ')[1]; // get JWT_TOKEN_STRING string from 'Bearer JWT_TOKEN_STRING' string
     console.log('token :', token);
     if (!token) {
-       // Unauthorized
+      // Unauthorized
       res.status(401).json({
-        message: 'NO_ACCESS_TOKEN'
+        message: 'NO_ACCESS_TOKEN',
       });
       return;
     }
 
     const secretKey: string = process.env.JWT_ACCESS_TOKEN_SECRET_KEY;
-    jwt.verify(token, secretKey, (error: any, member: any) => {
+    jwt.verify(token, secretKey, (error: any, decoded: any) => {
       if (error) {
-         // Forbidden
-        res.status(403).json({
-          message: 'FORBIDDEN_TOKEN'
-        })
+        // TODO: 여기서 verify 실패한 사유를 알 수 있는가?
+        //
+        console.log(error);
+        console.log(error.name);
+        console.log(error.message);
+        console.log('decoded :', decoded);
+
+        if (error.name === 'TokenExpiredError') {
+          // name: TokenExpiredError, message: jwt expired
+          res.status(403).json({
+            message: 'EXPIRED_TOKEN',
+          });
+        } else {
+          // all other cases
+          // name: JsonWebTokenError, message: invalid signature
+          // ...
+          res.status(401).json({
+            message: 'UNAUTHORIZED',
+          });
+        }
+
         return;
       }
 
-      log(chalk.green('authenticationTokenMiddleware. decoded :', member));
-
-      req.member = member;
+      log(chalk.green('authenticationTokenMiddleware. decoded :', decoded));
+      // req.member = decoded;
 
       next();
     });

@@ -1,5 +1,6 @@
 import { Award, ApiResult } from '@shared/interfaces/common';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import nookies, { parseCookies } from 'nookies';
 
 const SERVER_DOMAIN: string = 'http://localhost:9001';
 const PATH_API: string = '/api/awards';
@@ -8,24 +9,24 @@ class AwardsService {
   constructor() {}
 
   public async get(config = null): Promise<ApiResult<Award[]> | never> {
+    const cookies = parseCookies();
+    console.log('cookies :', cookies);
+
     let result: AxiosResponse<ApiResult<Award[]>>;
 
-    const url = `${config.isServer ? SERVER_DOMAIN : ''}${PATH_API}`;
-
     let options: AxiosRequestConfig = {
-      url,
+      url: `${config.isServer ? SERVER_DOMAIN : ''}${PATH_API}`,
       method: 'get',
-      // when this method is called, we need to add headers: { Authorization: cookies?.jwtAccessToken ? `Bearer ${cookies?.jwtAccessToken}` : '', }
+      headers: {
+        // when this method is called, we need to add 'Authorization' header
+        Authorization: cookies?.jwtAccessToken ? `Bearer ${cookies?.jwtAccessToken + 'qwert'}` : '',
+      },
     };
-    if (config) {
-      options = { ...options, headers: config.headers };
-    }
 
     try {
       result = await axios(options);
-    } catch (err) {
-      // console.error('[AwardsService.get]', err);
-      throw err;
+    } catch (e) {
+      throw e;
     }
 
     return result?.data;

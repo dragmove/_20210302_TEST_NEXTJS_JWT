@@ -7,20 +7,21 @@ export default function AwardsRoutes() {
 
   router.get(`/`, async (req, res) => {
     // TODO: call external API using axios on server side
-    let callApiResult: AxiosResponse<Award[]>; // { status, statusText, headers, config, request, data }
+    let result: AxiosResponse<Award[]>; // { status, statusText, headers, config, request, data }
 
     try {
-      callApiResult = await axios({
+      result = await axios({
         url: 'https://dragmove.github.io/dragmove.com/data/awards.json',
         method: 'get',
       });
-    } catch (err) {
-      throw err;
+    } catch (e) {
+      res.status(500).json({
+        message: 'Failed to get awards',
+      });
     }
 
-    res.json({
-      status: callApiResult.status,
-      data: callApiResult.data,
+    res.status(200).json({
+      data: result.data,
     });
   });
 
