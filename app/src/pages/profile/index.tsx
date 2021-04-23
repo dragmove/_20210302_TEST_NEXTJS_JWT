@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import styles from '@styles/Home.module.css';
 import { Award, Career, ApiResult } from '@shared/interfaces/common';
 import { redirect } from '@shared/common/utils';
 import { awardsService } from '@client/services/awards';

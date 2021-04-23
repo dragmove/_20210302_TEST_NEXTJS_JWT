@@ -1,22 +1,25 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import styles from '@styles/Home.module.css';
 import { Award } from '@shared/interfaces/common';
 import { profileService } from '@client/services/profile';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import nookies from 'nookies';
+import { useStores } from '@client/stores';
 
 export default function Home(props: unknown) {
   console.log('Home props :', props);
 
+  const { envStore } = useStores();
+  console.log('mobx envStore.phase :', envStore.phase);
+
   return (
-    <div className={styles.container}>
+    <div>
       <Head>
         <title>/</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
+      <main>
         <p>hello index</p>
 
         <button

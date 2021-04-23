@@ -7,7 +7,7 @@ services:
       - node-app-network
 
   backend-redis:
-    environment: 
+    environment:
       - NODE_ENV=dev # dev, alpha, beta, production
     build:
       dockerfile: Dockerfile
@@ -22,8 +22,8 @@ services:
       - node-app-network
 
   app-nextjs:
-    environment: 
-      - APP_ENV=dev # dev, alpha, beta, production
+    environment:
+      - PHASE=dev # dev, alpha, beta, production
     build:
       dockerfile: Dockerfile
       context: ./app
@@ -38,4 +38,4 @@ services:
 
 networks:
   node-app-network:
-    driver: bridge 
+    driver: bridge

@@ -33,9 +33,9 @@ const db = {
 
 dotenv.config();
 
-const isDev = process.env.APP_ENV !== 'production'; // TODO: Change isDev to phase
+const isDev = process.env.PHASE !== 'production'; // TODO: Change isDev to phase
 console.log('[app-nextjs] isDev :', isDev);
-console.log('[app-nextjs] APP_ENV :', process.env.APP_ENV);
+console.log('[app-nextjs] PHASE :', process.env.PHASE);
 
 async function init(): Promise<void> {
   // Ref: https://nextjs.org/docs/advanced-features/custom-server
