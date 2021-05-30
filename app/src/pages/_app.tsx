@@ -11,12 +11,21 @@ import type { AppProps } from 'next/app';
 import { Provider } from 'mobx-react';
 import { stores } from '@client/stores';
 import { PHASE } from '@client/constants/env';
+import { isBrowser } from '@shared/common/utils';
 
 function MyApp(props: AppProps) {
   const { Component, pageProps } = props;
+  console.log('[_app] PHASE :', PHASE);
+  console.log('[_app] pageProps :', pageProps);
 
-  console.log('// MyApp props :', props);
-  console.log('// MyApp PHASE :', PHASE);
+  const member = pageProps.member;
+  if (member) {
+    stores.memberStore.set(member);
+
+    if (isBrowser()) {
+      sessionStorage.setItem('member.id', member.id);
+    }
+  }
 
   // TODO: Custom error handling using componentDidCatch
 
@@ -30,9 +39,15 @@ function MyApp(props: AppProps) {
 MyApp.getInitialProps = async (appContext) => {
   const { router, ctx } = appContext;
 
+  console.log('[_app] getInitialProps :', ctx?.req?.member);
+
   const pageProps = {
-    // TODO: Add some infos
+    member: null,
   };
+
+  if (ctx?.req?.member) {
+    pageProps.member = ctx.req.member;
+  }
 
   return { pageProps };
 };

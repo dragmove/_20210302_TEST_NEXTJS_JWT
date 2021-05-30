@@ -1,8 +1,10 @@
+const chalk = require("chalk");
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
+const pingRouter = require("./routes/ping");
+const { log } = require("./utils/common");
 
-console.log("[backend-redis] process.env.NODE_ENV :", process.env.NODE_ENV);
+log("[backend-redis] process.env.NODE_ENV :", process.env.NODE_ENV);
 
 const PORT = parseInt(process.env.PORT, 10) || 9000;
 
@@ -13,58 +15,80 @@ const redisClient = redis.createClient({
   port: 6379,
 });
 redisClient.on("connect", () => {
-  console.log("redis-server is connected");
+  console.log("[backend-redis] redis-server is connected");
 });
 redisClient.on("error", (err) => {
   console.error(err);
+  console.log("[backend-redis] error 발생");
 });
 
 const app = express();
-app.use(bodyParser.json());
+app.disable("x-powered-by");
+app.use(express.json());
 app.use(cors());
+app.use(pingRouter);
 
-app.get("/ping", (req, res) => {
-  res.status(200).send("hello backend-redis");
+// save refresh token
+app.post("/refresh-token", (req, res) => {
+  const data = req.body;
+  log(chalk.bgWhite(`[backend-redis] post /refresh-token. data :`, data));
+
+  const { memberId, refreshToken } = data;
+  if (!memberId || !refreshToken) {
+    log(chalk.bgWhite(`[backend-redis] Could not save refresh token`));
+    return res.status(400).send();
+  }
+
+  redisClient.set(`refresh_token_${memberId}`, refreshToken, redis.print);
+
+  res.status(200).json({
+    message: "ok",
+  });
 });
 
 app.get("/refresh-token/:id", (req, res) => {
   const memberId = req.params?.id;
-  console.log("get. /refresh-token/:id. memberId :", memberId);
+  console.log("[backend-redis] get /refresh-token/:id. memberId :", memberId);
 
   if (!memberId) {
-    res.status(400).end();
-    return;
+    return res.status(400).send();
   }
 
   redisClient.get(`refresh_token_${memberId}`, (err, value) => {
     if (err) {
       console.error(err);
-      res.status(500).end();
-      return;
+      return res.status(500).send();
     }
 
-    res.status(200).send({
+    res.status(200).json({
       memberId,
       refreshToken: value,
     });
   });
 });
 
-app.post("/refresh-token", (req, res) => {
-  const data = req.body;
-  console.log("post. /refresh-token. data :", data);
+app.delete("/refresh-token/:id", (req, res) => {
+  const memberId = req.params?.id;
+  console.log(
+    "[backend-redis] delete /refresh-token/:id. memberId :",
+    memberId
+  );
 
-  const { memberId, refreshToken } = data;
-  if (!memberId || !refreshToken) {
-    res.status(400).end();
-    return;
+  if (!memberId) {
+    log(chalk.bgWhite(`[backend-redis] Could not delete refresh token`));
+    return res.status(400).send();
   }
 
-  redisClient.set(`refresh_token_${memberId}`, refreshToken, redis.print);
+  redisClient.del(`refresh_token_${memberId}`, (err, response) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send();
+    }
 
-  res.status(200).end();
+    res.status(200).send();
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`[backend-redis] Listening on port ${PORT}`);
+  log(chalk.bgWhite(`[backend-redis] Listening on port: ${PORT}`));
 });

@@ -11,8 +11,27 @@ class EnvStore {
   }
 }
 
+class MemberStore {
+  id: string;
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  set(member): void {
+    this.id = member.id;
+  }
+
+  get member() {
+    return {
+      id: this.id,
+    };
+  }
+}
+
 export const stores = {
   envStore: new EnvStore(),
+  memberStore: new MemberStore(),
 };
 
 export function useStores() {

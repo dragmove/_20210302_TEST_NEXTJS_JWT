@@ -4,32 +4,23 @@
 import chalk from 'chalk';
 import next from 'next';
 import express, { Request, Response, NextFunction } from 'express';
-import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
-import auth from './middlewares/auth';
+import passport from 'passport';
+import cors from 'cors';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import pingRouter from './routes/ping';
+import authRouter from './routes/auth'; // passport auth router
+// import pageAuth from './middlewares/pageAuth'; // page auth middleware
+import auth from './middlewares/auth'; // auth middleware
+import apiRouter from './routes/api';
 import { errorHandler } from './middlewares/error';
-import getRoutes from './api/routes';
 import { log } from '../shared/common/utils';
 import { Member } from '../shared/interfaces/common';
-import { generateAccessToken, generateRefreshToken } from './common/jwt';
 import dotenv from 'dotenv';
 import axios from 'axios';
-
-// TODO: This is a tbl_member table on DB
-const db = {
-  tbl_member: [
-    {
-      id: 'typescript',
-      password: '9999',
-    },
-    {
-      id: 'winter',
-      password: '8888',
-    },
-  ],
-  // tbl_refreshTokens: [],
-};
+import { SERVER_PORT } from '../shared/constants/common';
 
 dotenv.config();
 
@@ -47,24 +38,66 @@ async function init(): Promise<void> {
 
   await nextApp.prepare();
 
-  const PORT: number = parseInt(process.env.PORT, 10) || 9001;
-
   const app = express();
+  app.disable('x-powered-by');
 
   // TODO: Connect DB
 
+  // set middlewares
+  app.use(
+    helmet({
+      hsts: false,
+      contentSecurityPolicy: false,
+    })
+  );
+  app.use(cors());
+  app.use(express.static('public'));
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb' }));
+  app.use(compression());
+  app.use(cookieParser());
   app.use(morgan('dev'));
-  // app.use(helmet()); // TODO:
-  app.use(bodyParser.json());
-  app.use('*', auth);
+  app.use(pingRouter);
 
-  const customMiddleware = (err, req, res, next) => {
-    console.log('custom');
+  // authentication using passport
+  app.use(passport.initialize());
+  app.use(authRouter);
+
+  // routers provide static resources
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (
+      [/\/_next\/.*/, /\/assets\/.*/, /\/images\/.*/, /\/libs\/.*/].find(
+        (regex: RegExp) => regex.test(req.path) === true
+      )
+    ) {
+      return handle(req, res);
+    }
+
+    return next();
+  });
+
+  // TODO: routers do not require authorization
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if ([/\/login\/.*/].find((regex: RegExp) => regex.test(req.path) === true)) {
+      return handle(req, res);
+    }
+
+    return next();
+  });
+
+  // custom middlewares
+  app.use(function customMiddleware(err, req, res, next) {
+    console.log('custom middleware');
     next();
-  };
-  app.use(customMiddleware);
+  });
 
-  app.use('/api', getRoutes());
+  // routers require authorization
+  // FIXME: 잠시 진행을 멈추고, auth router 와 auth 미들웨어에서 할 일을 분리하자.
+  // app.use(pageAuth); // FIXME: 다시 한번 auth 미들웨어로만 할 수 있을지 고민해보기로 했다.
+  app.use(auth);
+  app.use(apiRouter);
+
+  // error handling
   app.use(errorHandler); // TODO: Check middleware line position
 
   // FIXME: Use webpack to build server/index.ts typescript file, and run.
@@ -73,7 +106,19 @@ async function init(): Promise<void> {
     handle(req, res);
   });
 
-  // + 1. Call /login api setting
+  const server = app.listen(SERVER_PORT, () => {
+    log(chalk.bgGreen(`[server] Listening on port: ${SERVER_PORT}`));
+  });
+}
+
+try {
+  init();
+} catch (err) {
+  console.error('[server] Failed to start server :', err);
+}
+
+/*
+// + 1. Call /login api setting
   // [Header] Key: 'Content-Type', Value: 'application/json'
   // [Body] { "id": "winter", "password": "8888" }
   // After calling /login, you can get { "accessToken": "JWT_TOKEN_STRING", "refreshToken": "JWT_REFRESH_TOKEN_STRING" }
@@ -125,14 +170,4 @@ async function init(): Promise<void> {
 
     res.status(200).json({ accessToken, refreshToken });
   });
-
-  const server = app.listen(PORT, () => {
-    log(chalk.bgGreen(`Listening on port: ${PORT}`));
-  });
-}
-
-try {
-  init();
-} catch (err) {
-  console.error('Failed to start server :', err);
-}
+  */

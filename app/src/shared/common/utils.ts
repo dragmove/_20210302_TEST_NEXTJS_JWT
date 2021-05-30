@@ -7,9 +7,12 @@ export function isArray(val: unknown): boolean {
   return Array.isArray(val);
 }
 
+export function isBrowser(): boolean {
+  return typeof window !== 'undefined';
+}
+
 export const redirect = (redirectUrl: string, context: NextPageContext = null): void => {
-  const isBrowser: boolean = typeof window !== 'undefined';
-  if (isBrowser) {
+  if (isBrowser()) {
     Router.push(redirectUrl);
     return;
   }

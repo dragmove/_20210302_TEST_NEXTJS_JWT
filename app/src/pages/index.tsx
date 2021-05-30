@@ -5,6 +5,8 @@ import { profileService } from '@client/services/profile';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import nookies from 'nookies';
 import { useStores } from '@client/stores';
+import { log } from '@shared/common/utils';
+import { login } from '../client/utils/auth';
 
 export default function Home(props: unknown) {
   console.log('Home props :', props);
@@ -22,57 +24,29 @@ export default function Home(props: unknown) {
       <main>
         <p>hello index</p>
 
-        <button
-          onClick={async (e) => {
-            e.preventDefault();
+        <div>
+          <Link href="/login">
+            <a
+              style={{
+                color: '#f00',
+              }}
+            >
+              Login
+            </a>
+          </Link>
+        </div>
 
-            // TODO: move this to client service
-            try {
-              // login and get access token
-              const loginApiResult: AxiosResponse = await axios({
-                // TODO: Set domain
-                url: '/login',
-                method: 'post',
-                data: {
-                  id: 'winter',
-                  password: '8888',
-                },
-              });
-              console.log('loginApiResult :', loginApiResult.data);
-
-              const data: { accessToken: string; refreshToken: string } = loginApiResult?.data;
-
-              const accessToken: string = data.accessToken;
-              console.log('accessToken :', accessToken);
-
-              // client needs to save access token somewhere.
-              // (I just save access token to 60 seconds life cookie)
-              nookies.set(null, 'jwtAccessToken', accessToken, {
-                // maxAge: 60,
-                // httpOnly: false,
-                // secure: true,
-              });
-
-              // I've already saved refreshToken to redis server
-              // const refreshToken: string = data.refreshToken;
-            } catch (e) {
-              const res: AxiosResponse = e.response;
-              console.error('[app-nextjs] Error:', res.data?.message);
-            }
-          }}
-        >
-          login
-        </button>
-
-        <Link href="/profile">
-          <a
-            style={{
-              color: '#f00',
-            }}
-          >
-            Profile
-          </a>
-        </Link>
+        <div>
+          <Link href="/profile">
+            <a
+              style={{
+                color: '#f00',
+              }}
+            >
+              Profile
+            </a>
+          </Link>
+        </div>
       </main>
     </div>
   );
