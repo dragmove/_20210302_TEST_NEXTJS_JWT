@@ -8,11 +8,12 @@ import { useStores } from '@client/stores';
 import { log } from '@shared/common/utils';
 import { login } from '../client/utils/auth';
 
-export default function Home(props: unknown) {
+interface Props {}
+
+export default function Home(props: Props) {
   console.log('Home props :', props);
 
   const { envStore } = useStores();
-  console.log('mobx envStore.phase :', envStore.phase);
 
   return (
     <div>

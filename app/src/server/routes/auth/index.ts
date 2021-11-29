@@ -15,7 +15,6 @@ import {
   ACCESS_TOKEN_EXPIRES,
   REFRESH_TOKEN_NAME,
   REFRESH_TOKEN_EXPIRES,
-  MEMBER_ID_TOKEN_NAME,
 } from '../../constants/const';
 // import { GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, SESSION_TIME_MS } from '../../constants/const';
 // import { expireAuthCookie, signJwt } from '../../utils/auth';
@@ -93,7 +92,13 @@ router.post(`${SERVICE_PATH}/auth/local`, (req: Request, res: Response, next: Ne
     {
       failureRedirect: LOGIN_ROUTE,
     },
-    async (err: { message: string; status?: number; type?: string } | Error, member?) => {
+    async (
+      err: { message: string; status?: number; type?: string } | Error,
+      member?: {
+        id: string;
+        password: string;
+      }
+    ) => {
       log('err, member :', err, member);
 
       if (err) {
@@ -125,19 +130,11 @@ router.post(`${SERVICE_PATH}/auth/local`, (req: Request, res: Response, next: Ne
       });
       console.log('accessToken, refreshToken :', accessToken, refreshToken);
 
-      // FIXME: 일단 10초 짜리 토큰을 만들고, cookie 는 15분 동안 유지되도록 설정했다. // process 개발 후에 둘 모두 동일하도록 원복 필요
+      // FIXME: 일단 10초 짜리 토큰을 만들고, cookie 는 10분 동안 유지되도록 설정했다. // process 개발 후에 둘 모두 동일하도록 원복 필요
 
       res.cookie(ACCESS_TOKEN_NAME, accessToken, {
         httpOnly: true,
         maxAge: ACCESS_TOKEN_EXPIRES,
-        path: COOKIE_PATH,
-        secure: false,
-        sameSite: 'strict',
-      });
-
-      res.cookie(MEMBER_ID_TOKEN_NAME, member.id, {
-        httpOnly: true,
-        maxAge: REFRESH_TOKEN_EXPIRES,
         path: COOKIE_PATH,
         secure: false,
         sameSite: 'strict',
@@ -157,7 +154,6 @@ router.post(`${SERVICE_PATH}/auth/refresh-access-token`, (req: Request, res: Res
   try {
     // 전달 받은 refresh token 이 유효한지 확인한다.
     const refreshToken: string = req.body.refreshToken;
-    console.log('refreshToken :', refreshToken);
 
     const decoded: any = verifyRefreshToken(refreshToken);
     const member = decoded;

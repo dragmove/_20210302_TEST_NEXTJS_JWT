@@ -19,8 +19,8 @@ export function generateAccessToken(payload, options?: { issuer?: string; expire
   const accessToken: string = jwt.sign(payload, ACCESS_TOKEN_SECRET.key, { ...defaultOptions, ...options });
   console.log('[generateAccessToken] 10 초 :', accessToken);
 
-  // const decoded: string = jwt.verify(accessToken, ACCESS_TOKEN_SECRET.key);
-  // console.log('decoded :', decoded);
+  const decoded: string = jwt.verify(accessToken, ACCESS_TOKEN_SECRET.key);
+  console.log('decoded :', decoded);
 
   return accessToken;
 }

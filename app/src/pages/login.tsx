@@ -8,11 +8,12 @@ import { useStores } from '@client/stores';
 import { log } from '@shared/common/utils';
 import Router from 'next/router';
 
-export default function Login(props: unknown) {
+interface Props {}
+
+export default function Login(props: Props) {
   console.log('Home props :', props);
 
   const { envStore, memberStore } = useStores();
-  console.log('mobx envStore.phase :', envStore.phase);
 
   return (
     <div>
@@ -48,7 +49,16 @@ export default function Login(props: unknown) {
 
               if (loginResponse.status === 200) {
                 const data: { accessToken: string; refreshToken: string } = loginResponse?.data;
-                console.log('data :', data);
+                console.log('로그인 완료. data :', data);
+
+                /*
+                일단, 로그인 후 accessToken 및 refreshToken을 클라이언트 측에서 취하는 것으로 구현 테스트 진행중.
+                어떻게 redis에 refreshToken을 저장하고
+                accessToken 만료시, 
+                  이 refreshToken을 redis로부터 받아와서 accessToken 갱신
+                  refreshToken 만료시 -> ?
+                
+                  */
 
                 // FIXME: ing
                 // id 를 MemberStore 에 저장한다. => 반드시 저장해야 하는가?

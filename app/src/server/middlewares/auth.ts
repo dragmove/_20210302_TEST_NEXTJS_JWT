@@ -2,55 +2,52 @@ import chalk from 'chalk';
 import jwt from 'jsonwebtoken';
 import { Router, Request, Response, NextFunction } from 'express';
 import { log } from '../../shared/common/utils';
-import {
-  ACCESS_TOKEN_EXPIRES,
-  ACCESS_TOKEN_NAME,
-  ACCESS_TOKEN_SECRET,
-  MEMBER_ID_TOKEN_NAME,
-} from '../../server/constants/const';
+import { ACCESS_TOKEN_EXPIRES, ACCESS_TOKEN_NAME, ACCESS_TOKEN_SECRET } from '../../server/constants/const';
 import { database } from '../../server/database';
 import { destroyCookie } from 'nookies';
 import { COOKIE_PATH } from '../../shared/constants/common';
 import axios from 'axios';
 import { generateAccessToken, verifyRefreshToken } from '../../server/utils/auth';
 
-const APT_PATH: RegExp = /^\/api/;
-const PAGE_PATH: RegExp = /^\/profile/; // FIXME: auth 처리를 해야 하는 page 들에 대한 정규식 정의 필요
+const API_PATH: RegExp = /^\/api/;
+const PAGE_PATH: RegExp = /^\/profile/; // FIXME: auth 처리 필요한 page 구분 정규식 작성 필요
 
-// authorization 이 필요한 path 정의
-const pathsNeedAuthorization: RegExp[] = [
-  // api path
-  APT_PATH,
-  // page path
-  PAGE_PATH,
-];
-
-// FIXME: 지금 문제가 생겼다.
-// 인증 후에 /api path 에서 처리되는 플로우는 괜찮은 것 같은데
-// page 들로 들어온 request 에 대해서는 json 반환을 해주면, /profile 페이지에 json 자체가 표시가 되어 버리고 있다.
+// authorization 필요한 path 정의
+const pathsNeedAuthorization: RegExp[] = [API_PATH, PAGE_PATH];
 
 const auth = async (req, res, next: NextFunction) => {
-  // TODO:
-  console.log('===== auth manages api =====');
+  console.log('===== auth middleware =====');
   console.log('// req.path :', req.path);
   console.log('// req.body :', req.body);
   console.log('// req.cookies :', req.cookies);
 
-  const isApiPath: boolean = APT_PATH.test(req.path);
-  const isPagePath: boolean = PAGE_PATH.test(req.path);
-
-  const needAuthentication: boolean = !!pathsNeedAuthorization.find((regex: RegExp) => regex.test(req.path) === true);
+  const needAuthentication: boolean = !!pathsNeedAuthorization.find(
+    (regex: RegExp): boolean => regex.test(req.path) === true
+  );
   console.log('needAuthentication :', needAuthentication);
   if (!needAuthentication) {
     return next();
   }
 
+  const isApiPath: boolean = API_PATH.test(req.path);
+  const isPagePath: boolean = PAGE_PATH.test(req.path);
+  console.log('isApiPath :', isApiPath);
+  console.log('isPagePath :', isPagePath);
+
   const accessToken: string = req.cookies[ACCESS_TOKEN_NAME];
-  const memberId: string = req.cookies[MEMBER_ID_TOKEN_NAME]; // TODO: memberId 가 쿠키에 없어서 발생하는 이슈들 구현 필요. 이 경우에는 재로그인을 하게 만들어야 한다.
   console.log('accessToken :', accessToken);
 
+  const memberId = jwt.verify(accessToken, ACCESS_TOKEN_SECRET.key, (err, decoded) => {
+    console.log('err, decoded :', err, decoded);
+
+    if (err) {
+      console.log('jwt.verify error');
+    }
+  });
+  console.log('memberId :', memberId);
+
   if (isApiPath) {
-    console.log('=== api path ===');
+    console.log('=== auth middleware - api path ===');
 
     // api path
     if (!accessToken) {
@@ -121,7 +118,7 @@ const auth = async (req, res, next: NextFunction) => {
       }
     }
   } else if (isPagePath) {
-    console.log('=== page path ==='); // FIXME: 현재는 /profile 페이지만 체크하게 되어 있으므로, auth 체크를 하는 페이지 추가 필요
+    console.log('=== auth middleware - page path ==='); // FIXME: 현재는 /profile 페이지만 체크하게 되어 있으므로, auth 체크를 하는 페이지 추가 필요
 
     // page path
     if (!accessToken) {
@@ -134,7 +131,14 @@ const auth = async (req, res, next: NextFunction) => {
         });
 
         const refreshToken: string = getRefreshTokenResult?.data?.refreshToken;
-        // TODO: refreshToken 이 redis 에 존재하지 않는 상황에 대한 처리 추가 필요
+        if (!refreshToken) {
+          destroyCookie({ res }, ACCESS_TOKEN_NAME, {
+            path: COOKIE_PATH,
+          });
+
+          // login 페이지로 이동 처리
+          return res.redirect('/login');
+        }
 
         const decoded: any = verifyRefreshToken(refreshToken);
         const member = decoded;
@@ -172,9 +176,6 @@ const auth = async (req, res, next: NextFunction) => {
 
           // cookie의 access token, member id 제거
           destroyCookie({ res }, ACCESS_TOKEN_NAME, {
-            path: COOKIE_PATH,
-          });
-          destroyCookie({ res }, MEMBER_ID_TOKEN_NAME, {
             path: COOKIE_PATH,
           });
 
